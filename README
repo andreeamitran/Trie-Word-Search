@@ -1,0 +1,78 @@
+In implementarea acestui proiect am folosit liste simplu inlantuite.
+
+Desenul urmator descrie ideea implementarii:
+ _____
+|_RAD_|
+   | urmlista
+   | 	
+ __|__	urmfrt      _____  urmfrt     _____
+|__a__|----------->|__b__|---------->|__d__|-|
+   |                  |                 |
+   |                  |_                |
+ __|__	  _____                       __|__
+|__d__|->|__g__|-|                   |__o__|-|
+   |        |                           |
+   |_       |                           |_
+          __|__
+         |__e__|
+            |
+            |_
+
+Practic, atunci cand se parcurge nod = nod->urmlista, se parcurge un cuvant (ex. "ad"). Atunci cand se parcurge nod = nod->urmfrt, atunci se parcurg celelalte posibilitati de formare a unui cuvant cu acelasi prefix (ex. ad, ag). 
+
+In fisierul "TArbore.h" este descrisa structura unui trie. Intr-un nod al arborelui se vor retine:
+	-> tip: 'n' sau 'f', 'n' daca litera din nod nu reprezinta sfarsit de cuvant, sau 'f' in caz contrar
+	-> caracter: un caracter al alfabetului sau o cifra
+	-> urmfrt: pointer catre urmatoarea celula din lista de copii a nodului parinte, deci urmatorul "frate" al nodului curent
+	-> urmlista: pointer catre lista de copii a nodului curent
+De asemenea sunt scrise semnaturile functiilor ce vor fi folosite in implementare.
+
+In fisierul "TArbore.c" sunt implementate functiile pentru prelucrarea unui trie.
+
+- Functia "find" cauta un cuvant in trie astfel:
+	-> porneste din radacina si verifica daca prima litera din cuvantul de cautat se afla in lista de copii a radacinii
+	-> in cazul in care caracterul este gasit, cautarea va continua prin retinerea celulei in care s-a gasit caracterul si verificarea urmatoarei litere din cuvantul de cautat se face in lista ei de copii
+	-> acest lucru se repeta atat timp nu s-au verificat toate literele din cuvantul de cautat si mai exista liste in care sa se caute
+	-> daca o litera nu se gaseste in trie, sau cuvantul de cautat nu este decat un prefix, functia intoarce NULL si se opreste cautarea
+	-> variabila to_return este un pointer catre celula de la care se poate realiza stergerea unor celule din trie, in cazul in care se doreste stergerea unui cuvant. Daca exista cuvinte ce reprezinta prefix pentru cuvantul de cautat, atunci se va retine adresa ultimului sfarsit de cuvant de pe acea cale si in acelasi timp, se retine si numarul de litere parcurs deja din trie, care se va returna prin efect lateral
+	-> daca sunt cuvinte ce au ca si prefix cuvantul dat, atunci variabila count va fi -1, pentru ca atunci cand se realizeaza stergerea sa nu se stearga nicio celula, deci sa nu fie distrus niciun alt cuvant din trie
+
+- Functia "findWord" verifica daca adresa returnata de functia "find" descrisa mai sus este NULL. Daca este NULL, atunci se afiseaza mesajul "False", iar in caz contrar, "True".
+
+- Functia "removeW" realizeaza stergerea unui cuvant astfel:
+	-> folosind functia find se verifica daca exista cuvantul in trie, iar in cazul in care nu exista, operatia nu face nimic
+	-> daca rezultatul returnat prin efect lateral de functia "find" este -1, cuvantul de sters reprezinta un prefix pentru alte cuvinte din trie si astfel se va modifica doar tipul ultimului sau nod, devenind din 'f' in 'n'
+	-> daca pointerul returnat de functia "find" contine adresa unei celule, atunci inseamna ca exista cuvinte ce reprezinta prefix pentru cuvantul dat si deci se vor elimina celulele urmatoare ultimului sfarsit de cuvant de pe acea cale.
+
+- Functia "fprefix" realizeaza cautarea unui prefix in trie si este utilizata in alte cateva functii de cautare de mai jos
+
+- Functia "findl_prefix" realizeaza gasirea celui mai lung prefix al cuvantului dat astfel:
+	-> cauta pe rand literele din cuvantul dat in trie si cat timp literele consecutive se gasesc in trie, le salveaza in vectorul prefix
+	-> daca in vector nu s-au salvat litere, afiseaza "None"
+	-> daca exista litere, inseamna ca exista un cel mai lung prefix si il afiseaza
+
+- Functia "findaw_prefix" realizeaza gasirea tuturor cuvintelor ce incep cu in prefix astfel:
+	-> cauta cel mai lung prefix in trie si in cazul in care nu s-a gasit, afiseaza "None"
+	-> in cazul in care s-a gasit, se construieste un subarbore al prefixului si se apeleaza functia de afisare pentu acesta.
+
+- Functia "InserAlfab" realizeaza inserarea unui nou cuvant in trie astfel:
+	-> porneste din radacina si verifica daca prima litera din cuvantul de cautat se afla in lista de copii a radacinii
+	-> in cazul in care caracterul este gasit, se continua prin retinerea celulei in care s-a gasit caracterul si verificarea urmatoarei litere din cuvantul de cautat se face in lista ei de copii
+	-> in cazul in care nu se gaseste caracterul, se adauga in lista de copii curenta, pe pozitia corespunzatoare, astfel incat literele din acea lista sa fie ordonate alfabetic
+	-> daca nu exista o litera care sa o preceada in lista curenta de copii, se insereaza la finalul listei.
+(Parcurgerea arborelui se realizeaza asemanator functiei removeW, de aceea nu am explicitat din nou.)
+
+- Functia "mean" realizeaza afisarea lungimii medie a cuvintelor care incep cu in prefix dat asfel:
+	-> se cauta prefixul in trie cu functia "fprefix" si daca exista cuvinte care contin acest prefix, se construieste un subarbore al acestui prefix si cu ajutorul functiei "mean_length" se calculeaza lungimea totala a cuvintelor din subarbore si numarul total de cuvinte din subarbore
+	-> se afiseaza lungimea_totala/numar_cuvinte.
+
+- Functiile "mean_length" si "afisare" functioneaza in mod asemanator, cu exceptia ca la gasirea unui cuvant, "mean_length" actualizeaza lungimea totala a cuvintelor si numarul total de cuvine din trie, iar "afisare" printeaza cuvantul in fisierul de iesire.
+	-> se pozitioneaza in sirul de caractere curent noul caracter
+	-> daca tipul de nod este 'f', atunci s-a ajuns la final de cuvant
+	-> parcurge arborele in adancime, pana la ultimul nivel
+	-> parcurge apoi "in dreapta" (lista de "frati" a listei de pe ultimul nivel)
+	-> la revenirea din recursivitate se sterge ultimul caracter adaugat
+
+In fisierul "fctAuxiliare.c" se afla functia de initializare a unui nou nod, functia de comparare a doua caractere si functia de eliberare a memoriei alocate pentru trie.
+
+In fisierul "main.c" se realizeaza citirea operatiilor din fisierul de intrare si in functie de datele primite, se apeleaza una dintre functiile de prelucrare a arborelui. Se citeste operatia si apoi cuvantul (cuvantul se citeste caracter cu caracter, iar vectorul de caractere este constant realocat dinamic).
